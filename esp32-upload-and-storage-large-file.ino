@@ -17,6 +17,7 @@
 
 ESP32WebServer server(80);
 String webpage = "";
+bool upload_file_done = true;
 
 const char ap_ssid[] = "ESP32";
 const char ap_pwd[] = "12345678";
@@ -52,10 +53,11 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
     }
     if (file.print(message))
     {
-        Serial.println("- file written");
+        // Serial.println("- file written");
     }
     else
     {
+        upload_file_done = false;
         Serial.println("- write failed");
     }
     file.close();
@@ -63,7 +65,7 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
 
 void appendFile(fs::FS &fs, const char *path, const char *message)
 {
-    Serial.printf("Appending to file: %s\r\n", path);
+    // Serial.printf("Appending to file: %s\r\n", path);
 
     File file = fs.open(path, FILE_APPEND);
     if (!file)
@@ -73,10 +75,11 @@ void appendFile(fs::FS &fs, const char *path, const char *message)
     }
     if (file.print(message))
     {
-        Serial.println("- message appended");
+        // Serial.println("- message appended");
     }
     else
     {
+        upload_file_done = false;
         Serial.println("- append failed");
     }
     file.close();
@@ -84,6 +87,7 @@ void appendFile(fs::FS &fs, const char *path, const char *message)
 
 void File_Upload()
 {
+    webpage = "";
     webpage += F("<h3>Select File to Upload</h3>");
     webpage += F("<FORM action='/fupload' method='post' enctype='multipart/form-data'>");
     webpage += F("<input class='buttons' style='width:40%' type='file' name='fupload' id = 'fupload' value=''><br>");
@@ -127,6 +131,20 @@ void ReportCouldNotCreateFile(String target)
     SendHTML_Stop();
 }
 
+String file_size(int bytes)
+{
+    String fsize = "";
+    if (bytes < 1024)
+        fsize = String(bytes) + " B";
+    else if (bytes < (1024 * 1024))
+        fsize = String(bytes / 1024.0, 3) + " KB";
+    else if (bytes < (1024 * 1024 * 1024))
+        fsize = String(bytes / 1024.0 / 1024.0, 3) + " MB";
+    else
+        fsize = String(bytes / 1024.0 / 1024.0 / 1024.0, 3) + " GB";
+    return fsize;
+}
+
 File UploadFile;
 int cnt = 0;
 void handleFileUpload()
@@ -136,33 +154,27 @@ void handleFileUpload()
                                               // For further information on 'status' structure, there are other reasons such as a failed transfer that could be used
     if (uploadfile.status == UPLOAD_FILE_START)
     {
+        upload_file_done = true;
         String filename = uploadfile.filename;
         if (!filename.startsWith("/"))
             filename = "/" + filename;
         Serial.print("Upload File Name: ");
         Serial.println(filename);
-        // SD.remove(filename);                         // Remove a previous version, otherwise data is appended the file again
-        // UploadFile = SD.open(filename, FILE_WRITE);  // Open the file for writing in SPIFFS (create it, if doesn't exist)
-        // filename = String();
-        Serial.print("total Size: ");
-        Serial.println(uploadfile.totalSize);
-        Serial.print("current Size: ");
-        Serial.println(uploadfile.currentSize);
+        writeFile(LITTLEFS, "/data.txt", ""); // clear current content in file
         uploadfile.status = UPLOAD_FILE_WRITE;
     }
     else if (uploadfile.status == UPLOAD_FILE_WRITE)
     {
         cnt++;
         Serial.println(cnt);
-        // if(UploadFile) UploadFile.write(uploadfile.buf, uploadfile.currentSize); // Write the received bytes to the file
+        appendFile(LITTLEFS, "/data.txt", (const char *)uploadfile.buf);
     }
     else if (uploadfile.status == UPLOAD_FILE_END)
     {
         Serial.println("UPLOAD_FILE_END");
 
-        if (UploadFile) // If the file was successfully created
+        if (upload_file_done) // If the file was successfully created
         {
-            UploadFile.close(); // Close the file again
             Serial.print("Upload Size: ");
             Serial.println(uploadfile.totalSize);
             webpage = "";
@@ -171,7 +183,7 @@ void handleFileUpload()
             webpage += F("<h2>Uploaded File Name: ");
             webpage += uploadfile.filename + "</h2>";
             webpage += F("<h2>File Size: ");
-            // webpage += file_size(uploadfile.totalSize) + "</h2><br>";
+            webpage += file_size(uploadfile.totalSize) + "</h2><br>";
             // append_page_footer();
             server.send(200, "text/html", webpage);
         }
@@ -180,6 +192,15 @@ void handleFileUpload()
             ReportCouldNotCreateFile("upload");
         }
     }
+}
+
+void HandleViewFile(void)
+{
+    webpage = "read file done!";
+    
+    readFile(LITTLEFS, "/data.txt");
+
+    server.send(200, "text/html", webpage);
 }
 
 void setup(void)
@@ -191,8 +212,6 @@ void setup(void)
         Serial.println("LITTLEFS Mount Failed");
         return;
     }
-
-    readFile(LITTLEFS, "/data.txt");
 
     // You can remove the password parameter if you want the AP to be open.
     WiFi.softAP(ap_ssid, ap_pwd);
@@ -206,6 +225,7 @@ void setup(void)
         "/fupload", HTTP_POST, []()
         { server.send(200); },
         handleFileUpload);
+    server.on("/view", HandleViewFile);
     server.begin();
 }
 
