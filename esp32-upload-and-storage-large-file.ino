@@ -160,14 +160,19 @@ void handleFileUpload()
             filename = "/" + filename;
         Serial.print("Upload File Name: ");
         Serial.println(filename);
-        writeFile(LITTLEFS, "/data.txt", ""); // clear current content in file
-        uploadfile.status = UPLOAD_FILE_WRITE;
+
+        UploadFile = LITTLEFS.open("/data.txt", FILE_WRITE);
+        if (!UploadFile)
+        {
+            Serial.println("- failed to open file for appending");
+            upload_file_done = false;
+            uploadfile.status = UPLOAD_FILE_END;
+        }else
+            uploadfile.status = UPLOAD_FILE_WRITE;
     }
     else if (uploadfile.status == UPLOAD_FILE_WRITE)
     {
-        cnt++;
-        Serial.println(cnt);
-        appendFile(LITTLEFS, "/data.txt", (const char *)uploadfile.buf);
+        UploadFile.write(uploadfile.buf, uploadfile.currentSize); // Write the received bytes to the file
     }
     else if (uploadfile.status == UPLOAD_FILE_END)
     {
@@ -175,6 +180,7 @@ void handleFileUpload()
 
         if (upload_file_done) // If the file was successfully created
         {
+            UploadFile.close();
             Serial.print("Upload Size: ");
             Serial.println(uploadfile.totalSize);
             webpage = "";
