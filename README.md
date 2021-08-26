@@ -14,14 +14,20 @@ To save file to flash i using Little FS instead of SPIFFS because SPIFFS cannot 
 2. upload file to flash: `Tools` >> `ESP32 LittleFS Data Upload`
 3. Select Flash size: `Tools` >> `4MB`
 4. Select Partition Scheme: `No OTA (1MB APP/3MB SPIFFS)`
+
+![select partition scheme](docs/img/select_partition_scheme.jpg)
+
 5. Select COM Port: `Tools` >> `Port`
 6. Compile and upload
 
 ## Usage
 1. Connect to ESP32 Access Point: ssid `ESP32`, password `12345678`
 2. Open Web Browser and type `192.168.4.1/upload`
+
+![upload file](docs/img/upload.jpg)
+
 3. Select text file wanna upload to ESP32
 
-## references
+## References
 - https://github.com/lorol/LITTLEFS
 - https://github.com/G6EJD/ESP32-8266-File-Upload/blob/master/ESP_File_Download_Upload.ino
