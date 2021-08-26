@@ -219,6 +219,8 @@ void setup(void)
         return;
     }
 
+    readFile(LITTLEFS, "/data.txt");
+
     // You can remove the password parameter if you want the AP to be open.
     WiFi.softAP(ap_ssid, ap_pwd);
     IPAddress myIP = WiFi.softAPIP();
@@ -233,6 +235,7 @@ void setup(void)
         handleFileUpload);
     server.on("/view", HandleViewFile);
     server.begin();
+    Serial.println("Server start done!");
 }
 
 void loop(void)
