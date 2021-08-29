@@ -5,8 +5,9 @@ To save file to flash i using Little FS instead of SPIFFS because SPIFFS cannot 
 
 ## Installation
 
-1. install esp32littlefs plugin(https://github.com/lorol/arduino-esp32littlefs-plugin)
-2. add ESP32WebServer lib (https://github.com/Pedroalbuquerque/ESP32WebServer)
+1. Install esp32littlefs plugin(https://github.com/lorol/arduino-esp32littlefs-plugin)
+2. Add ESP32WebServer lib (https://github.com/Pedroalbuquerque/ESP32WebServer)
+3. Add LittleFS lib (https://github.com/lorol/LITTLEFS)
 
 ## Configure
 
@@ -27,6 +28,14 @@ To save file to flash i using Little FS instead of SPIFFS because SPIFFS cannot 
 ![upload file](docs/img/upload.jpg)
 
 3. Select text file wanna upload to ESP32
+
+## Fix errors
+1. mklittlefs not found!
+
+Easy to fix this error is install esp8266 board on arduino (AppData\Local\Arduino15\packages\esp8266\tools\mkspiffs\3.0.4-gcc10.3-1757bed):
+- `File` >> `Preferences` >> `Additional Board Manager URLs` >> `https://dl.espressif.com/dl/package_esp32_index.json, https://arduino.esp8266.com/stable/package_esp8266com_index.json`
+- `Tools` >> `Board` >> `Boards Manager ...` >> `type and intall esp8266 by ESP8266 Community`
+
 
 ## References
 - https://github.com/lorol/LITTLEFS
